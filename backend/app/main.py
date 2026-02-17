@@ -4,6 +4,7 @@ Punto de entrada de la aplicación FastAPI
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
+from app.api.v1.router import api_router
 
 # Crear instancia de FastAPI
 app = FastAPI(
@@ -22,8 +23,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Incluir routers
+app.include_router(api_router, prefix="/api/v1")
 
-# Ruta de prueba (health check)
+
+# Health check endpoints
 @app.get("/", tags=["Health"])
 async def root():
     """
