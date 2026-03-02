@@ -24,9 +24,9 @@ def get_patients(
     - **skip**: Número de registros a saltar (para paginación)
     - **limit**: Máximo número de registros a retornar
     """
-    repo = PatientRepository(db)
-    patients = repo.get_all(skip=skip, limit=limit)
-    return patients
+    repo = PatientRepository(db)                    # Crear instancia del repositorio con la sesión de BD
+    return repo.get_all(skip=skip, limit=limit)     # Llamar al repositorio para obtener los pacientes limitados por paginación
+
 
 
 @router.get("/search", response_model=List[PatientResponse])
@@ -37,13 +37,12 @@ def search_patients(
     db: Session = Depends(get_db)
 ):
     """
-    Buscar pacientes por nombre o DNI
+    Buscar pacientes por nombre o CI
     
     - **q**: Término de búsqueda
     """
     repo = PatientRepository(db)
-    patients = repo.search(q, skip=skip, limit=limit)
-    return patients
+    return repo.search(q, skip=skip, limit=limit)
 
 
 @router.get("/{patient_id}", response_model=PatientResponse)
@@ -55,35 +54,35 @@ def get_patient(
     Obtener un paciente específico por ID
     """
     repo = PatientRepository(db)
-    patient = repo.get_by_id(patient_id)
-    
-    if not patient:
+    if patient := repo.get_by_id(patient_id):               # Si el paciente existe, lo retornamos
+        return patient
+    else:                                                   # Si no, lanzamos un error
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_404_NOT_FOUND,          # El código de estado HTTP para "No encontrado"
             detail=f"Paciente con ID {patient_id} no encontrado"
         )
     
-    return patient
+
 
 
 @router.post("/", response_model=PatientResponse, status_code=status.HTTP_201_CREATED)
 def create_patient(
     patient: PatientCreate,
     db: Session = Depends(get_db)
-):
+):  # sourcery skip: inline-immediately-returned-variable, use-named-expression
     """
     Crear un nuevo paciente
     
-    Valida que no exista otro paciente con el mismo DNI o email
+    Valida que no exista otro paciente con el mismo CI o email
     """
     repo = PatientRepository(db)
     
-    # Validar DNI único
-    existing_patient = repo.get_by_dni(patient.dni)
+    # Validar CI único
+    existing_patient = repo.get_by_ci(patient.ci)
     if existing_patient:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Ya existe un paciente con DNI {patient.dni}"
+            detail=f"Ya existe un paciente con CI {patient.ci}"
         )
     
     # Validar email único (si se proporciona)
@@ -104,7 +103,7 @@ def update_patient(
     patient_id: int,
     patient: PatientUpdate,
     db: Session = Depends(get_db)
-):
+):  # sourcery skip: inline-immediately-returned-variable, use-named-expression
     """
     Actualizar un paciente existente
     
@@ -138,6 +137,7 @@ def delete_patient(
     patient_id: int,
     db: Session = Depends(get_db)
 ):
+    # sourcery skip: reintroduce-else, swap-if-else-branches, use-named-expression
     """
     Eliminar un paciente
     """

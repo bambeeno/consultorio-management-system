@@ -10,7 +10,7 @@ class PatientBase(BaseModel):
     """Schema base de Paciente"""
     first_name: str
     last_name: str
-    dni: str
+    ci: str
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     birth_date: Optional[date] = None

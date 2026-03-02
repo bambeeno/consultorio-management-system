@@ -24,9 +24,9 @@ class PatientRepository:
         """Obtener paciente por ID"""
         return self.db.query(Patient).filter(Patient.id == patient_id).first()
     
-    def get_by_dni(self, dni: str) -> Optional[Patient]:
-        """Obtener paciente por DNI"""
-        return self.db.query(Patient).filter(Patient.dni == dni).first()
+    def get_by_ci(self, ci: str) -> Optional[Patient]:
+        """Obtener paciente por CI"""
+        return self.db.query(Patient).filter(Patient.ci == ci).first()
     
     def get_by_email(self, email: str) -> Optional[Patient]:
         """Obtener paciente por email"""
@@ -38,7 +38,7 @@ class PatientRepository:
         self.db.add(db_patient)
         self.db.commit()
         self.db.refresh(db_patient)
-        return db_patient
+        return self.get_by_id(db_patient.id)
     
     def update(self, patient_id: int, patient_data: PatientUpdate) -> Optional[Patient]:
         """Actualizar paciente existente"""
@@ -66,14 +66,14 @@ class PatientRepository:
         return True
     
     def search(self, query: str, skip: int = 0, limit: int = 100) -> List[Patient]:
-        """Buscar pacientes por nombre o DNI"""
+        """Buscar pacientes por nombre o CI"""
         search_pattern = f"%{query}%"
         return (
             self.db.query(Patient)
             .filter(
                 (Patient.first_name.ilike(search_pattern)) |
                 (Patient.last_name.ilike(search_pattern)) |
-                (Patient.dni.ilike(search_pattern))
+                (Patient.ci.ilike(search_pattern))
             )
             .offset(skip)
             .limit(limit)

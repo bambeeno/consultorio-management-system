@@ -17,7 +17,7 @@ class Patient(Base):
     # Datos personales
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
-    dni = Column(String(20), unique=True, index=True, nullable=False)
+    ci = Column(String(20), unique=True, index=True, nullable=False)
     
     # Contacto
     email = Column(String(255), unique=True, index=True, nullable=True)
