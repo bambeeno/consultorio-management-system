@@ -3,7 +3,8 @@
  */
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+// HARDCODEADO TEMPORALMENTE PARA DIAGNÓSTICO
+const API_BASE_URL = 'https://clinicpro-backend-kgsj.onrender.com/api/v1';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,

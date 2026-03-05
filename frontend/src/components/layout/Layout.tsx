@@ -1,7 +1,7 @@
 /**
  * Layout principal con Navbar
  */
-import type { ReactNode } from 'react';
+import type{ ReactNode } from 'react';
 import Navbar from './Navbar';
 
 interface LayoutProps {
