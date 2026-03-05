@@ -10,14 +10,14 @@ from app.api.v1.router import api_router
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="API para gestión de consultorios médicos",
+    description="API para gestión de consultorios médicos - ClinicPro",
     debug=settings.DEBUG
 )
 
 # Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=settings.cors_origins,  # Usar la propiedad
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -26,30 +26,23 @@ app.add_middleware(
 # Incluir routers
 app.include_router(api_router, prefix="/api/v1")
 
-
 # Health check endpoints
 @app.get("/", tags=["Health"])
 async def root():
-    """
-    Endpoint raíz - Health check
-    """
+    """Endpoint raíz - Health check"""
     return {
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION,
         "status": "running"
     }
 
-
 @app.get("/health", tags=["Health"])
 async def health_check():
-    """
-    Endpoint de verificación de salud del servicio
-    """
+    """Endpoint de verificación de salud del servicio"""
     return {
         "status": "healthy",
         "message": "Service is up and running"
     }
-
 
 if __name__ == "__main__":
     import uvicorn
