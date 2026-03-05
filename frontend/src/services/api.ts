@@ -3,8 +3,8 @@
  */
 import axios from 'axios';
 
-// HARDCODEADO TEMPORALMENTE PARA DIAGNÓSTICO
-const API_BASE_URL = 'https://clinicpro-backend-kgsj.onrender.com/api/v1';
+// URL del backend en producción
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://clinicpro-backend-kgsj.onrender.com/api/v1';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
