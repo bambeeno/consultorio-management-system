@@ -1,6 +1,8 @@
 """
 Configuración de la aplicación
 """
+from tkinter import E
+
 from pydantic_settings import BaseSettings
 from typing import List, Union
 import json
@@ -30,7 +32,7 @@ class Settings(BaseSettings):
         if isinstance(self.BACKEND_CORS_ORIGINS, str):
             try:
                 return json.loads(self.BACKEND_CORS_ORIGINS)
-            except:
+            except Exception:
                 return [self.BACKEND_CORS_ORIGINS]
         return self.BACKEND_CORS_ORIGINS
     

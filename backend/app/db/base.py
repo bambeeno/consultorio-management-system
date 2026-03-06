@@ -16,7 +16,7 @@ engine = create_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
     connect_args=connect_args,
-    pool_pre_ping=True,  # Importante para PostgreSQL en producción
+    pool_pre_ping=True,
 )
 
 # Crear session factory
@@ -24,3 +24,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Base para los modelos
 Base = declarative_base()
+
+# Importar todos los modelos aquí para que Alembic los detecte
+from app.models.consultorio import Consultorio
+from app.models.user import User
+from app.models.patient import Patient
