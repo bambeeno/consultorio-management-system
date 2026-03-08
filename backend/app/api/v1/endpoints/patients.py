@@ -1,13 +1,15 @@
 """
-Endpoints REST para gestión de Pacientes
+Endpoints de Pacientes
+Actualizado con autenticación y multi-tenancy
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List
-
 from app.db.session import get_db
-from app.repositories.patient_repository import PatientRepository
 from app.schemas.patient import PatientCreate, PatientUpdate, PatientResponse
+from app.repositories.patient_repository import PatientRepository
+from app.core.dependencies.auth import get_current_user
+from app.models.user import User
 
 router = APIRouter()
 
@@ -16,17 +18,23 @@ router = APIRouter()
 def get_patients(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Obtener lista de pacientes con paginación
+    Listar pacientes del consultorio
     
-    - **skip**: Número de registros a saltar (para paginación)
-    - **limit**: Máximo número de registros a retornar
+    ¿Qué cambió?
+    - Ahora requiere autenticación (current_user)
+    - Solo retorna pacientes del consultorio del usuario
+    - Secretaria, Doctor y Admin ven los mismos pacientes de su consultorio
     """
-    repo = PatientRepository(db)                    # Crear instancia del repositorio con la sesión de BD
-    return repo.get_all(skip=skip, limit=limit)     # Llamar al repositorio para obtener los pacientes limitados por paginación
-
+    repo = PatientRepository(db)
+    return repo.get_all(
+        consultorio_id=current_user.consultorio_id,
+        skip=skip,
+        limit=limit
+    )
 
 
 @router.get("/search", response_model=List[PatientResponse])
@@ -34,120 +42,167 @@ def search_patients(
     q: str = Query(..., min_length=1),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Buscar pacientes por nombre o CI
     
-    - **q**: Término de búsqueda
+    ¿Qué cambió?
+    - Requiere autenticación
+    - Solo busca en el consultorio del usuario
     """
     repo = PatientRepository(db)
-    return repo.search(q, skip=skip, limit=limit)
+    return repo.search(
+        query=q,
+        consultorio_id=current_user.consultorio_id,
+        skip=skip,
+        limit=limit
+    )
 
 
 @router.get("/{patient_id}", response_model=PatientResponse)
 def get_patient(
     patient_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Obtener un paciente específico por ID
+    Obtener un paciente por ID
+    
+    ¿Qué cambió?
+    - Requiere autenticación
+    - Verifica que el paciente pertenezca al consultorio del usuario
+    - Si pides un paciente de otro consultorio → 404
     """
     repo = PatientRepository(db)
-    if patient := repo.get_by_id(patient_id):               # Si el paciente existe, lo retornamos
-        return patient
-    else:                                                   # Si no, lanzamos un error
+    patient = repo.get_by_id(
+        patient_id=patient_id,
+        consultorio_id=current_user.consultorio_id
+    )
+    
+    if not patient:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,          # El código de estado HTTP para "No encontrado"
-            detail=f"Paciente con ID {patient_id} no encontrado"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found"
         )
     
-
+    return patient
 
 
 @router.post("/", response_model=PatientResponse, status_code=status.HTTP_201_CREATED)
 def create_patient(
     patient: PatientCreate,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
-):  # sourcery skip: inline-immediately-returned-variable, use-named-expression
+):
     """
     Crear un nuevo paciente
     
-    Valida que no exista otro paciente con el mismo CI o email
+    ¿Qué cambió?
+    - Requiere autenticación
+    - Automáticamente asigna el consultorio del usuario
+    - Verifica CI único dentro del consultorio
     """
     repo = PatientRepository(db)
     
-    # Validar CI único
-    existing_patient = repo.get_by_ci(patient.ci)
+    # Verificar CI único en el consultorio
+    existing_patient = repo.get_by_ci(
+        ci=patient.ci,
+        consultorio_id=current_user.consultorio_id
+    )
     if existing_patient:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Ya existe un paciente con CI {patient.ci}"
+            detail="A patient with this CI already exists in your consultorio"
         )
     
-    # Validar email único (si se proporciona)
+    # Verificar email único en el consultorio (si se proporciona)
     if patient.email:
-        existing_email = repo.get_by_email(patient.email)
+        existing_email = repo.get_by_email(
+            email=patient.email,
+            consultorio_id=current_user.consultorio_id
+        )
         if existing_email:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Ya existe un paciente con email {patient.email}"
+                detail="A patient with this email already exists in your consultorio"
             )
     
-    new_patient = repo.create(patient)
-    return new_patient
+    # Crear paciente con consultorio_id automático
+    return repo.create(
+        patient_data=patient,
+        consultorio_id=current_user.consultorio_id
+    )
 
 
 @router.put("/{patient_id}", response_model=PatientResponse)
 def update_patient(
     patient_id: int,
-    patient: PatientUpdate,
+    patient_data: PatientUpdate,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
-):  # sourcery skip: inline-immediately-returned-variable, use-named-expression
+):
     """
-    Actualizar un paciente existente
+    Actualizar un paciente
     
-    Solo se actualizan los campos enviados en el request
+    ¿Qué cambió?
+    - Requiere autenticación
+    - Solo puede actualizar pacientes de su consultorio
     """
     repo = PatientRepository(db)
     
-    # Verificar que existe
-    existing_patient = repo.get_by_id(patient_id)
-    if not existing_patient:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Paciente con ID {patient_id} no encontrado"
+    # Verificar email único si se está actualizando
+    if patient_data.email:
+        existing_email = repo.get_by_email(
+            email=patient_data.email,
+            consultorio_id=current_user.consultorio_id
         )
-    
-    # Validar email único (si se está actualizando)
-    if patient.email and patient.email != existing_patient.email:
-        email_exists = repo.get_by_email(patient.email)
-        if email_exists:
+        if existing_email and existing_email.id != patient_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Ya existe un paciente con email {patient.email}"
+                detail="A patient with this email already exists in your consultorio"
             )
     
-    updated_patient = repo.update(patient_id, patient)
-    return updated_patient
+    patient = repo.update(
+        patient_id=patient_id,
+        patient_data=patient_data,
+        consultorio_id=current_user.consultorio_id
+    )
+    
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found"
+        )
+    
+    return patient
 
 
 @router.delete("/{patient_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_patient(
     patient_id: int,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # sourcery skip: reintroduce-else, swap-if-else-branches, use-named-expression
     """
     Eliminar un paciente
+    
+    ¿Qué cambió?
+    - Requiere autenticación
+    - Solo puede eliminar pacientes de su consultorio
     """
     repo = PatientRepository(db)
     
-    success = repo.delete(patient_id)
-    if not success:
+    deleted = repo.delete(
+        patient_id=patient_id,
+        consultorio_id=current_user.consultorio_id
+    )
+    
+    if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Paciente con ID {patient_id} no encontrado"
+            detail="Patient not found"
         )
     
     return None
