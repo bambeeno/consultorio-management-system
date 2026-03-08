@@ -11,21 +11,18 @@ def hash_password(password: str) -> str:
     """
     Hash de password usando bcrypt
     
-    ¿Qué hace?
-    - Convierte "mipassword123" en algo como:
-      "$2b$12$KIXn6..."
-    - Es irreversible (no se puede obtener el password original)
-    - Cada hash es único (mismo password → diferentes hashes)
+    IMPORTANTE: Bcrypt tiene límite de 72 bytes.
+    Truncamos a 72 caracteres para evitar errores.
     """
+    # Truncar a 72 caracteres (límite de bcrypt)
+    password = password[:72]
     return pwd_context.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     Verifica si un password plano coincide con el hash
-    
-    ¿Qué hace?
-    - Compara "mipassword123" con el hash guardado
-    - Retorna True si coinciden, False si no
     """
+    # Truncar a 72 caracteres (debe coincidir con hash_password)
+    plain_password = plain_password[:72]
     return pwd_context.verify(plain_password, hashed_password)
