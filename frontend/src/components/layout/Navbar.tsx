@@ -1,65 +1,69 @@
 /**
- * Navbar principal de ClinicPro
+ * Navbar - Barra de navegación
+ * Actualizado con usuario logueado y logout
  */
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+
 export default function Navbar() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  /**
+   * Manejar logout
+   */
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
-    <nav className="bg-gradient-to-r from-primary to-primary-light text-white shadow-lg">
+    <nav className="bg-gradient-to-r from-[#051641] to-[#0F6083] text-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo y nombre */}
-          <div className="flex items-center space-x-3">
-            <div className="bg-white/10 p-2 rounded-lg backdrop-blur-sm">
-              <svg
-                className="w-8 h-8 text-secondary"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">ClinicPro</h1>
-              <p className="text-xs text-white/70">Sistema de Gestión</p>
-            </div>
+          {/* Logo y Título */}
+          <div className="flex items-center space-x-4">
+            <Link to="/patients" className="flex items-center space-x-2">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#2CA1B1] to-[#B0E4E8] rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">CP</span>
+              </div>
+              <span className="text-xl font-bold">ClinicPro</span>
+            </Link>
           </div>
 
-          {/* Menú */}
+          {/* Links de navegación */}
           <div className="flex items-center space-x-6">
-            <a
-              href="#"
-              className="text-white/90 hover:text-white transition-colors duration-200 font-medium"
+            <Link 
+              to="/patients" 
+              className="hover:text-[#B0E4E8] transition font-medium"
             >
               Pacientes
-            </a>
-            <a
-              href="#"
-              className="text-white/70 hover:text-white transition-colors duration-200"
-            >
-              Turnos
-            </a>
-            <a
-              href="#"
-              className="text-white/70 hover:text-white transition-colors duration-200"
-            >
-              Estadísticas
-            </a>
-          </div>
+            </Link>
 
-          {/* Usuario */}
-          <div className="flex items-center space-x-3">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-medium">Dr. Usuario</p>
-              <p className="text-xs text-white/60">Administrador</p>
-            </div>
-            <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center font-bold text-primary">
-              U
-            </div>
+            {/* Usuario logueado */}
+            {user && (
+              <div className="flex items-center space-x-4 border-l border-[#2CA1B1] pl-6">
+                <div className="text-right">
+                  <p className="text-sm font-medium">
+                    {user.first_name} {user.last_name}
+                  </p>
+                  <p className="text-xs text-[#B0E4E8]">
+                    {user.role === 'admin' ? 'Administrador' : 
+                    user.role === 'doctor' ? 'Doctor' : 
+                    user.role === 'secretaria' ? 'Secretaria' : 
+                    user.role}
+                  </p>
+                </div>
+
+                {/* Botón de Logout */}
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition font-medium text-sm"
+                >
+                  Salir
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
