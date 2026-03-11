@@ -1,14 +1,4 @@
-/**
- * Página de Registro
- * 
- * ¿Qué hace?
- * - Formulario para crear consultorio + primer usuario admin
- * - Valida todos los campos
- * - Llama a register() del AuthContext
- * - Hace login automático después del registro
- * - Redirige al dashboard
- */
-import { useState,type SyntheticEvent } from 'react';
+import { useState,  type SyntheticEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import type { RegisterData } from '../../types/auth';
@@ -17,7 +7,6 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const { register } = useAuth();
   
-  // Estado del formulario
   const [formData, setFormData] = useState<RegisterData>({
     consultorio_nombre: '',
     consultorio_email: '',
@@ -28,42 +17,41 @@ export default function RegisterPage() {
     password: ''
   });
   
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  /**
-   * Actualizar campo del formulario
-   */
   const handleChange = (field: keyof RegisterData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  /**
-   * Manejar submit
-   */
   const handleSubmit = async (e: SyntheticEvent | Event) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      // Validar password (mínimo 6 caracteres)
+      // Validar que las contraseñas coincidan
+      if (formData.password !== confirmPassword) {
+        setError('Las contraseñas no coinciden');
+        setLoading(false);
+        return;
+      }
+
+      // Validar longitud mínima
       if (formData.password.length < 6) {
         setError('La contraseña debe tener al menos 6 caracteres');
         setLoading(false);
         return;
       }
 
-      // Llamar a register del contexto
-      // Esto registra Y hace login automático
       await register(formData);
-      
-      // Redirigir a pacientes
       navigate('/patients');
     } catch (err: unknown) {
-      // Manejar errores
-      if ((err as { response?: { status: number } }).response?.status === 400) {
-        setError('El email ya está registrado');
+      if (err instanceof Error && (err as { response?: { status?: number } }).response?.status === 400) {
+        setError('El email ya esta registrado');
       } else {
         setError('Error al crear la cuenta. Intenta de nuevo.');
       }
@@ -75,19 +63,16 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#051641] via-[#0F6083] to-[#2CA1B1] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-8 my-8">
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-[#051641] mb-2">
             Crear cuenta en ClinicPro
           </h1>
           <p className="text-gray-600">
-            Comienza tu prueba gratuita de 30 días
+            Comienza tu prueba gratuita de 30 dias
           </p>
         </div>
 
-        {/* Formulario */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Datos del Consultorio */}
           <div className="bg-[#F8F8F9] p-6 rounded-lg">
             <h2 className="text-lg font-semibold text-[#051641] mb-4">
               Datos del Consultorio
@@ -105,7 +90,7 @@ export default function RegisterPage() {
                   value={formData.consultorio_nombre}
                   onChange={(e) => handleChange('consultorio_nombre', e.target.value)}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2CA1B1] focus:border-transparent outline-none"
-                  placeholder="Ej: Clínica Dental López"
+                  placeholder="Ej: Clinica Dental Lopez"
                   disabled={loading}
                 />
               </div>
@@ -128,7 +113,7 @@ export default function RegisterPage() {
 
                 <div>
                   <label htmlFor="consultorio_telefono" className="block text-sm font-medium text-gray-700 mb-2">
-                    Teléfono
+                    Telefono
                   </label>
                   <input
                     id="consultorio_telefono"
@@ -144,7 +129,6 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* Datos del Usuario */}
           <div className="bg-[#F8F8F9] p-6 rounded-lg">
             <h2 className="text-lg font-semibold text-[#051641] mb-4">
               Tu Cuenta de Administrador
@@ -179,7 +163,7 @@ export default function RegisterPage() {
                     value={formData.last_name}
                     onChange={(e) => handleChange('last_name', e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2CA1B1] focus:border-transparent outline-none"
-                    placeholder="López"
+                    placeholder="Lopez"
                     disabled={loading}
                   />
                 </div>
@@ -205,31 +189,60 @@ export default function RegisterPage() {
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                   Contraseña *
                 </label>
-                <input
-                  id="password"
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => handleChange('password', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2CA1B1] focus:border-transparent outline-none"
-                  placeholder="Mínimo 6 caracteres"
-                  disabled={loading}
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Mínimo 6 caracteres
-                </p>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={formData.password}
+                    onChange={(e) => handleChange('password', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2CA1B1] focus:border-transparent outline-none pr-12"
+                    placeholder="Minimo 6 caracteres"
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPassword ? '���️' : '���️‍���️'}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirmar Contraseña *
+                </label>
+                <div className="relative">
+                  <input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2CA1B1] focus:border-transparent outline-none pr-12"
+                    placeholder="Repite tu contraseña"
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showConfirmPassword ? '���️' : '���️‍���️'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Error message */}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
 
-          {/* Submit button */}
           <button
             type="submit"
             disabled={loading}
@@ -239,15 +252,14 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        {/* Link a login */}
         <div className="mt-6 text-center">
           <p className="text-gray-600">
-            ¿Ya tienes cuenta?{' '}
+            Ya tienes cuenta?{' '}
             <Link 
               to="/login" 
               className="text-[#2CA1B1] hover:text-[#0F6083] font-semibold"
             >
-              Inicia sesión
+              Inicia sesion
             </Link>
           </p>
         </div>
@@ -255,5 +267,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
-
