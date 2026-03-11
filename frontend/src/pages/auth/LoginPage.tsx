@@ -8,7 +8,7 @@
  * - Redirige al dashboard si es exitoso
  * - Muestra errores si falla
  */
-import { useState, FormEvent } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -25,7 +25,7 @@ export default function LoginPage() {
   /**
    * Manejar submit del formulario
    */
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: SyntheticEvent | Event) => {
     e.preventDefault(); // Prevenir recarga de página
     setError('');
     setLoading(true);
@@ -36,10 +36,10 @@ export default function LoginPage() {
       
       // Si llega aquí, el login fue exitoso
       navigate('/patients'); // Redirigir a pacientes
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Manejar errores
-      if (err.response?.status === 401) {
-        setError('Email o contraseña incorrectos');
+      if (err instanceof Error) {
+        setError('Email o contraseña incorrectos. Intenta de nuevo.');
       } else {
         setError('Error al iniciar sesión. Intenta de nuevo.');
       }
@@ -130,7 +130,7 @@ export default function LoginPage() {
         {/* Trial notice */}
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-500">
-            ��� 30 días de prueba gratis
+            ��� 30 días de prueba gratis
           </p>
         </div>
       </div>

@@ -8,7 +8,7 @@
  * - Hace login automático después del registro
  * - Redirige al dashboard
  */
-import { useState, FormEvent } from 'react';
+import { useState,type SyntheticEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import type { RegisterData } from '../../types/auth';
@@ -41,7 +41,7 @@ export default function RegisterPage() {
   /**
    * Manejar submit
    */
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: SyntheticEvent | Event) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -60,9 +60,9 @@ export default function RegisterPage() {
       
       // Redirigir a pacientes
       navigate('/patients');
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Manejar errores
-      if (err.response?.status === 400) {
+      if ((err as { response?: { status: number } }).response?.status === 400) {
         setError('El email ya está registrado');
       } else {
         setError('Error al crear la cuenta. Intenta de nuevo.');
