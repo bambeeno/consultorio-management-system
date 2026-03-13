@@ -1,16 +1,15 @@
 """
-Modelo Consultorio (Tenant)
-Cada consultorio es un tenant independiente
+Modelo de Consultorio
 """
+import enum
+from datetime import datetime, timezone, timedelta
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum as SQLEnum
 from sqlalchemy.orm import relationship
-from datetime import datetime
-import enum
-from app.db.base import Base
+from app.db.session import Base
 
 
 class PlanType(str, enum.Enum):
-    """Tipos de plan de suscripción"""
+    """Tipos de plan de suscripcion"""
     STARTER = "starter"
     PRO = "pro"
     CLINICA = "clinica"
@@ -20,28 +19,26 @@ class PlanType(str, enum.Enum):
 class Consultorio(Base):
     """Modelo de Consultorio (Tenant)"""
     __tablename__ = "consultorios"
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    nombre = Column(String(200), nullable=False)
-    ruc = Column(String(50), unique=True, nullable=True)
-    direccion = Column(String(500))
-    telefono = Column(String(50))
-    email = Column(String(255))
+    nombre = Column(String(255), nullable=False)
+    ruc = Column(String(50), nullable=True, unique=True)
+    direccion = Column(String(255), nullable=True)
+    telefono = Column(String(20), nullable=True)
+    email = Column(String(255), nullable=True)
     
-    # Plan y suscripción
     plan = Column(SQLEnum(PlanType), default=PlanType.STARTER, nullable=False)
-    activo = Column(Boolean, default=True, nullable=False)
-    fecha_suscripcion = Column(DateTime, default=datetime.utcnow)
-    fecha_vencimiento = Column(DateTime, nullable=True)
+    activo = Column(Boolean, default=True)
     
-    # Trial
-    trial = Column(Boolean, default=True, nullable=False)
-    trial_ends = Column(DateTime, nullable=True)
+    fecha_suscripcion = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    fecha_vencimiento = Column(DateTime(timezone=True), nullable=True)
     
-    # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    trial = Column(Boolean, default=True)
+    trial_ends = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc) + timedelta(days=30))
     
-    # Relaciones
-    users = relationship("User", back_populates="consultorio", cascade="all, delete-orphan")
-    patients = relationship("Patient", back_populates="consultorio", cascade="all, delete-orphan")
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
+    users = relationship("User", back_populates="consultorio")
+    patients = relationship("Patient", back_populates="consultorio")
+    appointments = relationship("Appointment", back_populates="consultorio")

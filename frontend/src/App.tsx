@@ -1,6 +1,5 @@
 /**
  * App - Configuración principal de rutas
- * Actualizado con autenticación
  */
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -8,6 +7,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import PatientsPage from './pages/PatientsPage';
+import AppointmentsPage from './pages/AppointmentsPage';
 
 function App() {
   return (
@@ -28,11 +28,20 @@ function App() {
             }
           />
 
-          {/* Ruta por defecto → redirige a pacientes */}
-          <Route path="/" element={<Navigate to="/patients" replace />} />
+          <Route
+            path="/appointments"
+            element={
+              <ProtectedRoute>
+                <AppointmentsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Ruta por defecto → redirige a appointments */}
+          <Route path="/" element={<Navigate to="/appointments" replace />} />
 
           {/* 404 - Ruta no encontrada */}
-          <Route path="*" element={<Navigate to="/patients" replace />} />
+          <Route path="*" element={<Navigate to="/appointments" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

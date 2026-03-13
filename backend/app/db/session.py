@@ -1,13 +1,26 @@
 """
-Dependency para obtener sesión de BD
+Database session configuration
 """
-from typing import Generator
-from app.db.base import SessionLocal
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
+from app.core.config import settings
+
+# Create engine
+engine = create_engine(
+    settings.DATABASE_URL,
+    connect_args={"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
+)
+
+# Create SessionLocal class
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Create Base class for models
+Base = declarative_base()
 
 
-def get_db() -> Generator:
+def get_db():
     """
-    Dependency que provee una sesión de base de datos
+    Dependency for getting database session
     """
     db = SessionLocal()
     try:

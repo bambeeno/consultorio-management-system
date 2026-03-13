@@ -1,47 +1,41 @@
 """
-Modelo User
-Usuarios del sistema con roles y permisos
+Modelo de Usuario
 """
+import enum
+from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import relationship
-from datetime import datetime
-import enum
-from app.db.base import Base
+from app.db.session import Base
 
 
 class RoleType(str, enum.Enum):
-    """Tipos de roles"""
-    SUPER_ADMIN = "super_admin"  # Administrador del SaaS (tú)
-    ADMIN = "admin"  # Dueño del consultorio
-    DOCTOR = "doctor"  # Profesional médico
-    SECRETARIA = "secretaria"  # Recepción/administración
-    CONTADOR = "contador"  # Solo reportes financieros
+    """Roles de usuario"""
+    SUPER_ADMIN = "super_admin"
+    ADMIN = "admin"
+    DOCTOR = "doctor"
+    SECRETARIA = "secretaria"
+    CONTADOR = "contador"
 
 
 class User(Base):
     """Modelo de Usuario"""
     __tablename__ = "users"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     consultorio_id = Column(Integer, ForeignKey("consultorios.id"), nullable=False)
     
-    # Datos personales
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
-    email = Column(String(255), unique=True, index=True, nullable=False)
-    
-    # Autenticación
+    email = Column(String(255), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
-    is_verified = Column(Boolean, default=False, nullable=False)
     
-    # Rol
-    role = Column(SQLEnum(RoleType), default=RoleType.SECRETARIA, nullable=False)
+    is_active = Column(Boolean, default=True)
+    is_verified = Column(Boolean, default=False)
+    role = Column(SQLEnum(RoleType), default=RoleType.ADMIN, nullable=False)
     
-    # Metadata
-    last_login = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_login = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
-    # Relaciones
     consultorio = relationship("Consultorio", back_populates="users")
+    appointments = relationship("Appointment", back_populates="doctor")

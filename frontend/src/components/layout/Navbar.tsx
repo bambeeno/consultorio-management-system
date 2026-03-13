@@ -1,20 +1,24 @@
 /**
  * Navbar - Barra de navegación
- * Actualizado con usuario logueado y logout
  */
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  /**
-   * Manejar logout
-   */
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  /**
+   * Verificar si link está activo
+   */
+  const isActive = (path: string) => {
+    return location.pathname === path;
   };
 
   return (
@@ -23,7 +27,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo y Título */}
           <div className="flex items-center space-x-4">
-            <Link to="/patients" className="flex items-center space-x-2">
+            <Link to="/appointments" className="flex items-center space-x-2">
               <div className="w-10 h-10 bg-gradient-to-br from-[#2CA1B1] to-[#B0E4E8] rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">CP</span>
               </div>
@@ -34,10 +38,21 @@ export default function Navbar() {
           {/* Links de navegación */}
           <div className="flex items-center space-x-6">
             <Link 
-              to="/patients" 
-              className="hover:text-[#B0E4E8] transition font-medium"
+              to="/appointments" 
+              className={`hover:text-[#B0E4E8] transition font-medium ${
+                isActive('/appointments') ? 'text-[#B0E4E8] border-b-2 border-[#B0E4E8] pb-1' : ''
+              }`}
             >
-              Pacientes
+              ��� Turnos
+            </Link>
+
+            <Link 
+              to="/patients" 
+              className={`hover:text-[#B0E4E8] transition font-medium ${
+                isActive('/patients') ? 'text-[#B0E4E8] border-b-2 border-[#B0E4E8] pb-1' : ''
+              }`}
+            >
+              ��� Pacientes
             </Link>
 
             {/* Usuario logueado */}
@@ -55,7 +70,6 @@ export default function Navbar() {
                   </p>
                 </div>
 
-                {/* Botón de Logout */}
                 <button
                   onClick={handleLogout}
                   className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition font-medium text-sm"

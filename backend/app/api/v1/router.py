@@ -2,19 +2,15 @@
 Router principal de la API v1
 """
 from fastapi import APIRouter
-from app.api.v1.endpoints import patients, auth
+from app.api.v1.endpoints import auth, patients, appointments
 
 api_router = APIRouter()
 
-# Incluir routers
-api_router.include_router(
-    auth.router,
-    prefix="/auth",
-    tags=["Authentication"]
-)
+# Rutas de autenticación
+api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 
-api_router.include_router(
-    patients.router,
-    prefix="/patients",
-    tags=["Patients"]
-)
+# Rutas de pacientes
+api_router.include_router(patients.router, prefix="/patients", tags=["patients"])
+
+# Rutas de turnos
+api_router.include_router(appointments.router, prefix="/appointments", tags=["appointments"])
