@@ -1,6 +1,3 @@
-/**
- * Formulario de Historia Clínica (Modal)
- */
 import { useState, useEffect, FormEvent } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import patientService from '../../services/patientService';
@@ -21,8 +18,6 @@ export default function MedicalRecordForm({
   const { user } = useAuth();
   
   const [patients, setPatients] = useState<Patient[]>([]);
-  
-  // Fecha y hora local
   const [consultationDateLocal, setConsultationDateLocal] = useState('');
   
   const [formData, setFormData] = useState<Omit<MedicalRecordCreate, 'consultation_date'>>({
@@ -42,9 +37,6 @@ export default function MedicalRecordForm({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  /**
-   * Formatear Date a datetime-local
-   */
   const formatDatetimeLocal = (isoString: string): string => {
     const date = new Date(isoString);
     const year = date.getFullYear();
@@ -55,25 +47,19 @@ export default function MedicalRecordForm({
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  /**
-   * Convertir datetime-local a ISO
-   */
   const datetimeLocalToISO = (datetimeLocal: string): string => {
     return `${datetimeLocal}:00.000Z`;
   };
 
-  // Inicializar fecha
   useEffect(() => {
     if (record?.consultation_date) {
       setConsultationDateLocal(formatDatetimeLocal(record.consultation_date));
     } else {
-      // Por defecto: ahora
       const now = new Date();
       setConsultationDateLocal(formatDatetimeLocal(now.toISOString()));
     }
   }, [record]);
 
-  // Cargar pacientes
   useEffect(() => {
     const loadPatients = async () => {
       try {
@@ -130,17 +116,14 @@ export default function MedicalRecordForm({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl my-8">
-        {/* Header */}
         <div className="bg-gradient-to-r from-[#051641] to-[#0F6083] text-white p-6 sticky top-0 rounded-t-2xl">
           <h2 className="text-2xl font-bold">
             {record ? 'Editar Historia Clinica' : 'Nueva Historia Clinica'}
           </h2>
         </div>
 
-        {/* Formulario */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
           
-          {/* Datos básicos */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -177,7 +160,6 @@ export default function MedicalRecordForm({
             </div>
           </div>
 
-          {/* Motivo y Síntomas */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -208,7 +190,6 @@ export default function MedicalRecordForm({
             </div>
           </div>
 
-          {/* Diagnóstico y Tratamiento */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Diagnostico *
@@ -238,7 +219,6 @@ export default function MedicalRecordForm({
             />
           </div>
 
-          {/* Signos Vitales */}
           <div className="bg-[#F8F8F9] p-4 rounded-lg">
             <h3 className="text-lg font-semibold text-[#051641] mb-4">Signos Vitales</h3>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -272,7 +252,7 @@ export default function MedicalRecordForm({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Temp (°C)
+                  Temp (C)
                 </label>
                 <input
                   type="number"
@@ -317,7 +297,6 @@ export default function MedicalRecordForm({
             </div>
           </div>
 
-          {/* Notas */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Notas Adicionales
@@ -332,14 +311,12 @@ export default function MedicalRecordForm({
             />
           </div>
 
-          {/* Error */}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
 
-          {/* Botones */}
           <div className="flex gap-3 pt-4 sticky bottom-0 bg-white pb-4">
             <button
               type="button"

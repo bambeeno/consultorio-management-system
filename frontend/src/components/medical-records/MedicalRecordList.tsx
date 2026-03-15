@@ -1,6 +1,3 @@
-/**
- * Lista de Historias Clínicas
- */
 import type { MedicalRecord } from '../../types/medicalRecord';
 
 interface MedicalRecordListProps {
@@ -15,9 +12,6 @@ export default function MedicalRecordList({
   onDelete
 }: MedicalRecordListProps) {
 
-  /**
-   * Formatear fecha
-   */
   const formatDate = (datetime: string) => {
     return new Date(datetime).toLocaleDateString('es-PY', {
       day: '2-digit',
@@ -26,9 +20,6 @@ export default function MedicalRecordList({
     });
   };
 
-  /**
-   * Formatear fecha y hora
-   */
   const formatDateTime = (datetime: string) => {
     return new Date(datetime).toLocaleString('es-PY', {
       day: '2-digit',
@@ -60,7 +51,6 @@ export default function MedicalRecordList({
           key={record.id}
           className="bg-white rounded-lg shadow hover:shadow-lg transition p-6"
         >
-          {/* Header */}
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
@@ -76,7 +66,6 @@ export default function MedicalRecordList({
               </p>
             </div>
 
-            {/* Acciones */}
             <div className="flex gap-2">
               <button
                 onClick={() => onEdit(record)}
@@ -93,9 +82,7 @@ export default function MedicalRecordList({
             </div>
           </div>
 
-          {/* Contenido principal */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Columna izquierda */}
             <div className="space-y-3">
               {record.chief_complaint && (
                 <div>
@@ -124,7 +111,6 @@ export default function MedicalRecordList({
               )}
             </div>
 
-            {/* Columna derecha - Signos vitales */}
             <div className="bg-[#F8F8F9] rounded-lg p-4">
               <p className="text-sm font-semibold text-gray-700 mb-3">Signos Vitales:</p>
               <div className="grid grid-cols-2 gap-3 text-sm">
@@ -143,7 +129,7 @@ export default function MedicalRecordList({
                 {record.temperature && (
                   <div>
                     <p className="text-gray-600">Temperatura:</p>
-                    <p className="font-medium">{record.temperature}°C</p>
+                    <p className="font-medium">{record.temperature} C</p>
                   </div>
                 )}
                 {record.weight && (
@@ -162,7 +148,6 @@ export default function MedicalRecordList({
             </div>
           </div>
 
-          {/* Notas */}
           {record.notes && (
             <div className="mt-4 pt-4 border-t border-gray-200">
               <p className="text-sm font-semibold text-gray-700 mb-1">Notas:</p>
@@ -170,7 +155,6 @@ export default function MedicalRecordList({
             </div>
           )}
 
-          {/* Footer */}
           <div className="mt-4 pt-4 border-t border-gray-200 text-xs text-gray-500">
             Creado: {formatDateTime(record.created_at)}
           </div>
