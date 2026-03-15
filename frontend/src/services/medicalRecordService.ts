@@ -1,6 +1,3 @@
-/**
- * Servicio de Medical Records (Historias Clínicas)
- */
 import api from './api';
 import type {
   MedicalRecord,
@@ -11,9 +8,6 @@ import type {
 } from '../types/medicalRecord';
 
 const medicalRecordService = {
-  /**
-   * Obtener lista de historias clínicas con filtros opcionales
-   */
   async getAll(filters?: MedicalRecordFilters): Promise<MedicalRecordListResponse> {
     const params = new URLSearchParams();
     
@@ -30,9 +24,6 @@ const medicalRecordService = {
     return response.data;
   },
 
-  /**
-   * Obtener historial médico completo de un paciente
-   */
   async getByPatient(patientId: number): Promise<MedicalRecordListResponse> {
     const response = await api.get<MedicalRecordListResponse>(
       `/medical-records/patient/${patientId}`
@@ -40,33 +31,21 @@ const medicalRecordService = {
     return response.data;
   },
 
-  /**
-   * Obtener una historia clínica por ID
-   */
   async getById(id: number): Promise<MedicalRecord> {
     const response = await api.get<MedicalRecord>(`/medical-records/${id}`);
     return response.data;
   },
 
-  /**
-   * Crear una nueva historia clínica
-   */
   async create(data: MedicalRecordCreate): Promise<MedicalRecord> {
     const response = await api.post<MedicalRecord>('/medical-records', data);
     return response.data;
   },
 
-  /**
-   * Actualizar una historia clínica
-   */
   async update(id: number, data: MedicalRecordUpdate): Promise<MedicalRecord> {
     const response = await api.put<MedicalRecord>(`/medical-records/${id}`, data);
     return response.data;
   },
 
-  /**
-   * Eliminar una historia clínica
-   */
   async delete(id: number): Promise<void> {
     await api.delete(`/medical-records/${id}`);
   }

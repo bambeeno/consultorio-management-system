@@ -1,20 +1,15 @@
-/**
- * Tipos para Medical Records (Historias Clínicas)
- */
-
 export interface MedicalRecord {
   id: number;
   consultorio_id: number;
   patient_id: number;
   appointment_id?: number;
   doctor_id: number;
-  consultation_date: string; // ISO 8601 datetime
+  consultation_date: string;
   chief_complaint?: string;
   symptoms?: string;
   diagnosis: string;
   treatment?: string;
   notes?: string;
-  // Signos vitales
   blood_pressure?: string;
   heart_rate?: number;
   temperature?: number;
@@ -22,7 +17,6 @@ export interface MedicalRecord {
   height?: number;
   created_at: string;
   updated_at: string;
-  // Datos anidados
   patient_name?: string;
   doctor_name?: string;
 }
