@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, type SyntheticEvent } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import patientService from '../../services/patientService';
 import type { MedicalRecord, MedicalRecordCreate } from '../../types/medicalRecord';
@@ -15,6 +15,7 @@ export default function MedicalRecordForm({
   onSubmit,
   onClose
 }: MedicalRecordFormProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user } = useAuth();
   
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -76,7 +77,7 @@ export default function MedicalRecordForm({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -106,7 +107,8 @@ export default function MedicalRecordForm({
       };
 
       await onSubmit(recordData);
-    } catch (err: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err: unknown) {
       setError('Error al guardar la historia clinica. Intenta de nuevo.');
     } finally {
       setLoading(false);
@@ -135,6 +137,7 @@ export default function MedicalRecordForm({
                 onChange={(e) => handleChange('patient_id', parseInt(e.target.value))}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2CA1B1] focus:border-transparent outline-none"
                 disabled={loading}
+                title="Seleccionar paciente"
               >
                 <option value="">Seleccionar paciente</option>
                 {patients.map(patient => (
@@ -156,6 +159,7 @@ export default function MedicalRecordForm({
                 onChange={(e) => setConsultationDateLocal(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2CA1B1] focus:border-transparent outline-none"
                 disabled={loading}
+                title="Seleccionar fecha y hora de consulta"
               />
             </div>
           </div>
