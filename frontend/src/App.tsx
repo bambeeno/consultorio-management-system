@@ -8,6 +8,7 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import PatientsPage from './pages/PatientsPage';
 import AppointmentsPage from './pages/AppointmentsPage';
+import MedicalRecordsPage from './pages/MedicalRecordsPage';
 
 function App() {
   return (
@@ -37,10 +38,17 @@ function App() {
             }
           />
 
-          {/* Ruta por defecto → redirige a appointments */}
-          <Route path="/" element={<Navigate to="/appointments" replace />} />
+          <Route
+            path="/medical-records"
+            element={
+              <ProtectedRoute>
+                <MedicalRecordsPage />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* 404 - Ruta no encontrada */}
+          {/* Ruta por defecto */}
+          <Route path="/" element={<Navigate to="/appointments" replace />} />
           <Route path="*" element={<Navigate to="/appointments" replace />} />
         </Routes>
       </AuthProvider>

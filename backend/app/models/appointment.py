@@ -23,7 +23,7 @@ class Appointment(Base):
     __tablename__ = "appointments"
 
     id = Column(Integer, primary_key=True, index=True)
-    consultorio_id = Column(Integer, ForeignKey("consultorios.id"), nullable=False)
+    consultorio_id = Column(Integer, ForeignKey("consultorios.id"), nullable=False, index=True)
     patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
     doctor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
@@ -37,6 +37,8 @@ class Appointment(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
+    # Relaciones
     consultorio = relationship("Consultorio", back_populates="appointments")
     patient = relationship("Patient", back_populates="appointments")
     doctor = relationship("User", back_populates="appointments")
+    medical_records = relationship("MedicalRecord", back_populates="appointment")

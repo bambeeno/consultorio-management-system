@@ -39,6 +39,8 @@ class Consultorio(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
+    # Relaciones
     users = relationship("User", back_populates="consultorio")
     patients = relationship("Patient", back_populates="consultorio")
     appointments = relationship("Appointment", back_populates="consultorio")
+    medical_records = relationship("MedicalRecord", back_populates="consultorio")

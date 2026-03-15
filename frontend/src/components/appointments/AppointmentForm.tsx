@@ -1,10 +1,10 @@
 /**
  * Formulario de Turno (Modal)
  */
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, type SyntheticEvent } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import patientService from '../../services/patientService';
-import type { Appointment, AppointmentCreate, AppointmentStatus } from '../../types/appointment';
+import { AppointmentStatus, type Appointment, type AppointmentCreate } from '../../types/appointment';
 import type { Patient } from '../../types/patient';
 
 interface AppointmentFormProps {
@@ -22,7 +22,7 @@ export default function AppointmentForm({
   
   const [patients, setPatients] = useState<Patient[]>([]);
   
-  // Estado local para inputs (sin conversión UTC)
+  // Estado local para inputs
   const [startTimeLocal, setStartTimeLocal] = useState('');
   const [endTimeLocal, setEndTimeLocal] = useState('');
   
@@ -31,29 +31,20 @@ export default function AppointmentForm({
     doctor_id: appointment?.doctor_id || user?.id || 0,
     reason: appointment?.reason || '',
     notes: appointment?.notes || '',
-    status: appointment?.status || 'scheduled'
+    status: appointment?.status ?? AppointmentStatus.SCHEDULED,
   });
   
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Cargar datos iniciales si estamos editando
-  useEffect(() => {
-    if (appointment) {
-      // Convertir de UTC a local para mostrar
-      const startUTC = new Date(appointment.start_time);
-      const endUTC = new Date(appointment.end_time);
-      
-      // Formato datetime-local: YYYY-MM-DDTHH:mm
-      setStartTimeLocal(formatDatetimeLocal(startUTC));
-      setEndTimeLocal(formatDatetimeLocal(endUTC));
-    }
-  }, [appointment]);
-
   /**
-   * Formatear Date a string datetime-local
+   * Formatear Date UTC a datetime-local en hora local
    */
-  const formatDatetimeLocal = (date: Date): string => {
+  const formatDatetimeLocal = (isoString: string): string => {
+    // Crear fecha desde ISO string (viene en UTC del backend)
+    const date = new Date(isoString);
+    
+    // Obtener componentes en hora local
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -64,14 +55,22 @@ export default function AppointmentForm({
   };
 
   /**
-   * Convertir datetime-local a ISO string (lo que espera el backend)
+   * Convertir datetime-local (YYYY-MM-DDTHH:mm) a ISO string SIN cambiar zona horaria
+   * El backend espera UTC, pero queremos enviar la hora exacta que el usuario seleccionó
    */
   const datetimeLocalToISO = (datetimeLocal: string): string => {
-    // datetime-local ya está en la zona horaria local
-    // Solo agregamos :00 para los segundos y la 'Z' para UTC
-    const date = new Date(datetimeLocal);
-    return date.toISOString();
+    // NO usar new Date() porque convierte a zona horaria local
+    // En su lugar, agregar manualmente :00.000Z
+    return `${datetimeLocal}:00.000Z`;
   };
+
+  // Cargar datos iniciales si estamos editando
+  useEffect(() => {
+    if (appointment) {
+      setStartTimeLocal(formatDatetimeLocal(appointment.start_time));
+      setEndTimeLocal(formatDatetimeLocal(appointment.end_time));
+    }
+  }, [appointment]);
 
   useEffect(() => {
     const loadPatients = async () => {
@@ -85,26 +84,42 @@ export default function AppointmentForm({
     loadPatients();
   }, []);
 
-  const handleChange = (field: keyof typeof formData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleChange = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: field === 'patient_id' || field === 'doctor_id' ? Number(value) : value
+    }));
   };
 
   /**
    * Manejar cambio de hora de inicio
-   * Calcula automáticamente +1 hora para el fin
+   * - Calcula automáticamente +1 hora para el fin
+   * - Mantiene la misma FECHA
    */
   const handleStartTimeChange = (value: string) => {
     setStartTimeLocal(value);
     
     if (value) {
-      // Calcular +1 hora automáticamente
-      const start = new Date(value);
-      const end = new Date(start.getTime() + 60 * 60 * 1000);
-      setEndTimeLocal(formatDatetimeLocal(end));
+      // Extraer fecha y hora
+      const [date, time] = value.split('T');
+      const [hours, minutes] = time.split(':');
+      
+      // Calcular +1 hora
+      let endHours = parseInt(hours) + 1;
+      
+      // Si pasa de 23h, mantener en 23:59
+      if (endHours > 23) {
+        endHours = 23;
+      }
+      
+      const endTime = `${String(endHours).padStart(2, '0')}:${minutes}`;
+      
+      // Mantener la MISMA fecha
+      setEndTimeLocal(`${date}T${endTime}`);
     }
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -122,11 +137,19 @@ export default function AppointmentForm({
         return;
       }
 
-      const startDate = new Date(startTimeLocal);
-      const endDate = new Date(endTimeLocal);
-
-      if (endDate <= startDate) {
+      // Validar que end sea después de start
+      if (endTimeLocal <= startTimeLocal) {
         setError('La hora de fin debe ser posterior a la de inicio');
+        setLoading(false);
+        return;
+      }
+
+      // Validar que sea el mismo día
+      const startDate = startTimeLocal.split('T')[0];
+      const endDate = endTimeLocal.split('T')[0];
+      
+      if (startDate !== endDate) {
+        setError('El turno debe terminar el mismo dia');
         setLoading(false);
         return;
       }
@@ -138,13 +161,18 @@ export default function AppointmentForm({
         end_time: datetimeLocalToISO(endTimeLocal)
       };
 
+      console.log('Enviando:', appointmentData); // Debug
+
       await onSubmit(appointmentData);
-    } catch (err: any) {
-      if (err.response?.status === 409) {
-        setError('Ya existe un turno en ese horario');
-      } else {
-        setError('Error al guardar el turno. Intenta de nuevo.');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        if ((err as { response?: { status?: number } }).response?.status === 409) {
+          setError('Ya existe un turno en ese horario');
+        } else {
+          setError('Error al guardar el turno. Intenta de nuevo.');
+        }
       }
+
     } finally {
       setLoading(false);
     }
@@ -167,9 +195,10 @@ export default function AppointmentForm({
             <select
               required
               value={formData.patient_id}
-              onChange={(e) => handleChange('patient_id', parseInt(e.target.value))}
+              onChange={(e) => handleChange('patient_id', String(e.target.value))}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2CA1B1] focus:border-transparent outline-none"
               disabled={loading}
+              title="Selecciona el paciente para este turno"
             >
               <option value="">Seleccionar paciente</option>
               {patients.map(patient => (
@@ -180,6 +209,7 @@ export default function AppointmentForm({
             </select>
           </div>
 
+          {/* Fecha y hora de inicio */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Fecha y Hora de Inicio *
@@ -191,23 +221,47 @@ export default function AppointmentForm({
               onChange={(e) => handleStartTimeChange(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2CA1B1] focus:border-transparent outline-none"
               disabled={loading}
+              title="Selecciona la fecha y hora para este turno"
             />
           </div>
 
+          {/* Solo HORA de fin (fecha bloqueada) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Fecha y Hora de Fin *
+              Hora de Fin *
             </label>
-            <input
-              type="datetime-local"
-              required
-              value={endTimeLocal}
-              onChange={(e) => setEndTimeLocal(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2CA1B1] focus:border-transparent outline-none"
-              disabled={loading}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              {/* Fecha (solo lectura) */}
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Fecha (mismo dia)</label>
+                <input
+                  type="date"
+                  value={startTimeLocal.split('T')[0] || ''}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                  disabled
+                  title="La fecha de fin se mantiene igual a la de inicio"
+                />
+              </div>
+              
+              {/* Hora (editable) */}
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Hora</label>
+                <input
+                  type="time"
+                  required
+                  value={endTimeLocal.split('T')[1] || ''}
+                  onChange={(e) => {
+                    const date = startTimeLocal.split('T')[0];
+                    setEndTimeLocal(`${date}T${e.target.value}`);
+                  }}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2CA1B1] focus:border-transparent outline-none"
+                  disabled={loading || !startTimeLocal}
+                  title="Selecciona la hora de fin"
+                />
+              </div>
+            </div>
             <p className="text-sm text-gray-500 mt-1">
-              Duracion sugerida: 1 hora (se calcula automaticamente)
+              La hora de fin se calcula automaticamente (+1 hora), pero puedes ajustarla
             </p>
           </div>
 
@@ -249,6 +303,7 @@ export default function AppointmentForm({
                 onChange={(e) => handleChange('status', e.target.value as AppointmentStatus)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2CA1B1] focus:border-transparent outline-none"
                 disabled={loading}
+                title="Actualiza el estado del turno"
               >
                 <option value="scheduled">Agendado</option>
                 <option value="confirmed">Confirmado</option>

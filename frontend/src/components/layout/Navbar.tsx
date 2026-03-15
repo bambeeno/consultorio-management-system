@@ -14,9 +14,6 @@ export default function Navbar() {
     navigate('/login');
   };
 
-  /**
-   * Verificar si link está activo
-   */
   const isActive = (path: string) => {
     return location.pathname === path;
   };
@@ -25,7 +22,6 @@ export default function Navbar() {
     <nav className="bg-gradient-to-r from-[#051641] to-[#0F6083] text-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo y Título */}
           <div className="flex items-center space-x-4">
             <Link to="/appointments" className="flex items-center space-x-2">
               <div className="w-10 h-10 bg-gradient-to-br from-[#2CA1B1] to-[#B0E4E8] rounded-lg flex items-center justify-center">
@@ -35,7 +31,6 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Links de navegación */}
           <div className="flex items-center space-x-6">
             <Link 
               to="/appointments" 
@@ -55,7 +50,15 @@ export default function Navbar() {
               ��� Pacientes
             </Link>
 
-            {/* Usuario logueado */}
+            <Link 
+              to="/medical-records" 
+              className={`hover:text-[#B0E4E8] transition font-medium ${
+                isActive('/medical-records') ? 'text-[#B0E4E8] border-b-2 border-[#B0E4E8] pb-1' : ''
+              }`}
+            >
+              ��� Historias
+            </Link>
+
             {user && (
               <div className="flex items-center space-x-4 border-l border-[#2CA1B1] pl-6">
                 <div className="text-right">

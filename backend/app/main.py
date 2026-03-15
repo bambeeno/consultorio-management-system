@@ -7,7 +7,7 @@ from app.core.config import settings
 
 # IMPORTANTE: Importar TODOS los modelos ANTES de cualquier cosa
 from app.db.base import Base
-from app.models import consultorio, user, patient, appointment
+from app.models import consultorio, user, patient, appointment, medical_record
 
 from app.api.v1.router import api_router
 
