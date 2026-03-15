@@ -1,5 +1,5 @@
 /**
- * Página de Historias Clínicas
+ * Pagina de Historias Clinicas
  */
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,9 +16,6 @@ export default function MedicalRecordsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingRecord, setEditingRecord] = useState<MedicalRecord | null>(null);
 
-  /**
-   * Cargar historias clínicas
-   */
   const loadRecords = async () => {
     try {
       setLoading(true);
@@ -35,9 +32,6 @@ export default function MedicalRecordsPage() {
     loadRecords();
   }, []);
 
-  /**
-   * Crear historia clínica
-   */
   const handleCreate = async (data: MedicalRecordCreate) => {
     try {
       await medicalRecordService.create(data);
@@ -49,9 +43,6 @@ export default function MedicalRecordsPage() {
     }
   };
 
-  /**
-   * Actualizar historia clínica
-   */
   const handleUpdate = async (id: number, data: MedicalRecordCreate) => {
     try {
       await medicalRecordService.update(id, data);
@@ -64,9 +55,6 @@ export default function MedicalRecordsPage() {
     }
   };
 
-  /**
-   * Eliminar historia clínica
-   */
   const handleDelete = async (id: number) => {
     if (!confirm('Estas seguro de eliminar esta historia clinica?')) return;
     
@@ -78,9 +66,6 @@ export default function MedicalRecordsPage() {
     }
   };
 
-  /**
-   * Abrir formulario para editar
-   */
   const handleEdit = (record: MedicalRecord) => {
     setEditingRecord(record);
     setShowForm(true);
@@ -89,7 +74,6 @@ export default function MedicalRecordsPage() {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-[#051641]">
@@ -111,7 +95,6 @@ export default function MedicalRecordsPage() {
           </button>
         </div>
 
-        {/* Lista de historias */}
         {loading ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 border-4 border-[#2CA1B1] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -125,7 +108,6 @@ export default function MedicalRecordsPage() {
           />
         )}
 
-        {/* Modal de formulario */}
         {showForm && (
           <MedicalRecordForm
             record={editingRecord}
